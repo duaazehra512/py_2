@@ -17,27 +17,36 @@ def add_task(task, priority):
             "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         })
         sort_tasks()
+        st.rerun()
 
-# Function to remove a task
+# Function to remove a task efficiently
 def remove_task(task_to_remove):
     st.session_state.tasks = [task for task in st.session_state.tasks if task["task"] != task_to_remove]
+    st.rerun()
 
 # Function to toggle completion
 def toggle_task(task_name):
     for task in st.session_state.tasks:
         if task["task"] == task_name:
             task["completed"] = not task["completed"]
+    st.rerun()
 
 # Function to edit a task
 def edit_task(old_task_name, new_task_name):
     for task in st.session_state.tasks:
         if task["task"] == old_task_name:
             task["task"] = new_task_name
+    st.rerun()
 
 # Function to sort tasks by priority
 def sort_tasks():
     priority_order = {"🚨 High": 1, "⚖️ Medium": 2, "🟢 Low": 3}
     st.session_state.tasks.sort(key=lambda x: priority_order[x["priority"]])
+
+# Function to clear all tasks efficiently
+def clear_all_tasks():
+    st.session_state.tasks = []
+    st.rerun()
 
 # App Title with emoji
 st.markdown("""
@@ -89,24 +98,20 @@ if st.session_state.tasks:
             with cols[1]:
                 if st.checkbox("✔️ Done", task["completed"], key=f"check_{index}"):
                     toggle_task(task["task"])
-                    st.rerun()
 
             # Edit task button
             with cols[2]:
                 new_task_name = st.text_input(f"✏️ Edit {task['task']}", value=task['task'], key=f"edit_{index}")
                 if st.button("💾 Save", key=f"edit_btn_{index}"):
                     edit_task(task["task"], new_task_name)
-                    st.rerun()
 
             # Remove task button
             with cols[3]:
                 if st.button("🗑️ Remove", key=f"remove_{index}"):
                     remove_task(task["task"])
-                    st.rerun()
 else:
     st.info("🎉 No tasks added yet. Start by adding a task from the sidebar!")
 
 # Clear all tasks button
 if st.button("🗑️ Clear All Tasks"):
-    st.session_state.tasks = []
-    st.rerun()
+    clear_all_tasks()
