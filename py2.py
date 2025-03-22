@@ -46,11 +46,19 @@ st.markdown("""
 
 # Sidebar for Task Input with styling
 st.sidebar.markdown("""
-    <h2 style='color: #4CAF50;'>📋 Manage Your Tasks</h2>
+    <h1 style='color: #4CAF50;'>📋 Manage Your Tasks</h1>
 """, unsafe_allow_html=True)
 
-task_input = st.sidebar.text_input("✍️ Enter your task here...", key="task_input")
-priority_select = st.sidebar.selectbox("⚡ Priority", ["🚨 High", "⚖️ Medium", "🟢 Low"], key="priority_select")
+st.sidebar.markdown("""
+    <h2 style='color: black;'>✍️ Enter Your Task Here...</h2>
+""", unsafe_allow_html=True)
+
+task_input = st.sidebar.text_input("", key="task_input")
+
+st.sidebar.markdown("""
+    <h2 style='color: black;'>⚡ Priority</h2>
+""", unsafe_allow_html=True)
+priority_select = st.sidebar.selectbox("", ["🚨 High", "⚖️ Medium", "🟢 Low"], key="priority_select")
 
 def reset_task_input():
     st.session_state.task_input = ""
@@ -68,30 +76,32 @@ if st.session_state.tasks:
     sort_tasks()
     for index, task in enumerate(st.session_state.tasks):
         with st.container():
-            cols = st.columns([3, 2, 1, 1, 1])
+            cols = st.columns([4, 2, 2, 2])  # Adjusted column widths for better responsiveness
             
             # Task with priority tag
             with cols[0]:
-                st.markdown(f"<h4>{task['task']} ({task['priority']})</h4>", unsafe_allow_html=True)
+                task_color = "green" if task["completed"] else "black"
+                st.markdown(f"<h4 style='color: {task_color};'>{task['task']}</h4>", unsafe_allow_html=True)
+                st.markdown(f"<small style='color: gray;'>{task['priority']}</small>", unsafe_allow_html=True)
                 st.caption(f"🕒 Added: {task['timestamp']}")
-            
-            # Mark as completed
+
+            # Mark as completed (changes task color)
             with cols[1]:
-                if st.checkbox("✔️ Done", task['completed'], key=f"check_{index}"):
-                    toggle_task(task['task'])
+                if st.checkbox("✔️ Done", task["completed"], key=f"check_{index}"):
+                    toggle_task(task["task"])
                     st.rerun()
 
             # Edit task button
             with cols[2]:
                 new_task_name = st.text_input(f"✏️ Edit {task['task']}", value=task['task'], key=f"edit_{index}")
                 if st.button("💾 Save", key=f"edit_btn_{index}"):
-                    edit_task(task['task'], new_task_name)
+                    edit_task(task["task"], new_task_name)
                     st.rerun()
 
             # Remove task button
             with cols[3]:
                 if st.button("🗑️ Remove", key=f"remove_{index}"):
-                    remove_task(task['task'])
+                    remove_task(task["task"])
                     st.rerun()
 else:
     st.info("🎉 No tasks added yet. Start by adding a task from the sidebar!")
@@ -100,4 +110,3 @@ else:
 if st.button("🗑️ Clear All Tasks"):
     st.session_state.tasks = []
     st.rerun()
-
