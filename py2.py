@@ -1,3 +1,4 @@
+
 import streamlit as st
 from datetime import datetime
 
@@ -8,7 +9,9 @@ if 'task_input' not in st.session_state:
     st.session_state.task_input = ""
 
 # Function to add a task
-def add_task(task, priority):
+def add_task():
+    task = st.session_state.task_input.strip()
+    priority = st.session_state.priority_select
     if task and not any(t['task'] == task for t in st.session_state.tasks):  # Ensure unique tasks
         st.session_state.tasks.append({
             "task": task,
@@ -16,6 +19,7 @@ def add_task(task, priority):
             "completed": False,
             "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         })
+        st.session_state.task_input = ""  # Clear input after adding task
         sort_tasks()
         st.rerun()
 
@@ -51,6 +55,7 @@ def clear_all_tasks():
 # App Title with emoji
 st.markdown("""
     <h1 style='text-align: center; color: #FF6347;'>📝 Growth Mindset To-Do List ✅</h1>
+    <h2 style='text-align: center; color: black;'>By Duaa Raza</h2>
 """, unsafe_allow_html=True)
 
 # Sidebar for Task Input with styling
@@ -62,19 +67,16 @@ st.sidebar.markdown("""
     <h2 style='color: black;'>✍️ Enter Your Task Here...</h2>
 """, unsafe_allow_html=True)
 
-task_input = st.sidebar.text_input("", key="task_input")
+task_input = st.sidebar.text_input("", key="task_input", on_change=add_task)
 
 st.sidebar.markdown("""
     <h2 style='color: black;'>⚡ Priority</h2>
 """, unsafe_allow_html=True)
-priority_select = st.sidebar.selectbox("", ["🚨 High", "⚖️ Medium", "🟢 Low"], key="priority_select")
+st.sidebar.selectbox("", ["🚨 High", "⚖️ Medium", "🟢 Low"], key="priority_select")
 
-def reset_task_input():
-    st.session_state.task_input = ""
-
-if task_input:
-    add_task(task_input, priority_select)
-    st.button("✅ Confirm", on_click=reset_task_input)  # Ensures session state is updated safely
+# Add button for better usability on mobile devices
+if st.sidebar.button("➕ Add Task"):
+    add_task()
 
 # Display Tasks with improved styling
 if st.session_state.tasks:
