@@ -1,122 +1,103 @@
-# import streamlit as st
-
-# # To store the tasks, we'll use a session state.
-# if 'tasks' not in st.session_state:
-#     st.session_state.tasks = []
-
-# # Function to add a task
-# def add_task():
-#     task = st.session_state.new_task
-#     if task:
-#         st.session_state.tasks.append(task)
-#         st.session_state.new_task = ""  # Clear the input box
-
-# # Function to remove a task
-# def remove_task(task_to_remove):
-#     st.session_state.tasks.remove(task_to_remove)
-
-# # Title of the app
-# st.title("Growth Mindset To-Do List")
-
-# # Introduction
-# st.markdown("""
-# This is your personal To-Do list. Acknowledge each task and remove what's completed. 
-# Keep growing with your tasks and progress!
-# """)
-
-# # Add Task Section
-# st.subheader("Add a New Task:")
-# st.text_input("Enter your task:", key="new_task")
-
-# # Button to add task
-# if st.button("Add Task"):
-#     add_task()
-
-# # Show current tasks in a beautiful, professional, and organized way
-# if st.session_state.tasks:
-#     st.subheader("Your Tasks:")
-#     for task in st.session_state.tasks:
-#         task_col, remove_col = st.columns([4, 1])  # Two columns: one for the task, one for removing the task
-#         with task_col:
-#             st.markdown(f"- {task}")
-#         with remove_col:
-#             if st.button("Remove", key=task):
-#                 remove_task(task)
-# else:
-#     st.markdown("### No tasks added. Start by adding a task!")
-
-
-
 import streamlit as st
+from datetime import datetime
 
-# To store the tasks, we'll use a session state.
+# Initialize session state
 if 'tasks' not in st.session_state:
     st.session_state.tasks = []
-if 'new_task' not in st.session_state:
-    st.session_state.new_task = ""  # Initialize the new_task state
+if 'task_input' not in st.session_state:
+    st.session_state.task_input = ""
 
 # Function to add a task
-def add_task():
-    task = st.session_state.new_task
-    if task:
-        st.session_state.tasks.append(task)
-        st.session_state.new_task = ""  # Clear the input box after adding the task
+def add_task(task, priority):
+    if task and not any(t['task'] == task for t in st.session_state.tasks):  # Ensure unique tasks
+        st.session_state.tasks.append({
+            "task": task,
+            "priority": priority,
+            "completed": False,
+            "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        })
+        sort_tasks()
 
 # Function to remove a task
 def remove_task(task_to_remove):
-    st.session_state.tasks.remove(task_to_remove)
+    st.session_state.tasks = [task for task in st.session_state.tasks if task["task"] != task_to_remove]
+
+# Function to toggle completion
+def toggle_task(task_name):
+    for task in st.session_state.tasks:
+        if task["task"] == task_name:
+            task["completed"] = not task["completed"]
 
 # Function to edit a task
-def edit_task(old_task, new_task):
-    index = st.session_state.tasks.index(old_task)
-    st.session_state.tasks[index] = new_task
-
-# Title of the app
-st.title("Growth Mindset To-Do List")
-
-# Introduction
-st.markdown("""
-This is your personal To-Do list. Acknowledge each task and remove what's completed. 
-Keep growing with your tasks and progress!
-""")
-
-# Add Task Section
-st.subheader("Add a New Task:")
-# Using `st.session_state.new_task` as the initial value for the input box.
-st.text_input("Enter your task:", key="new_task")
-
-# Button to add task
-if st.button("Add Task"):
-    add_task()
-
-# Show current tasks in a beautiful, professional, and organized way
-if st.session_state.tasks:
-    st.subheader("Your Tasks:")
-    
+def edit_task(old_task_name, new_task_name):
     for task in st.session_state.tasks:
-        # Creating columns for the task and the "Manage Task" box
-        task_col, manage_col = st.columns([4, 2])  # Adjusted column sizes to fit the manage box
+        if task["task"] == old_task_name:
+            task["task"] = new_task_name
 
-        with task_col:
-            st.markdown(f"- **{task}**")
-        
-        with manage_col:
-            # Create buttons for managing tasks (Edit and Remove)
-            edit_button = st.button(f"Edit", key=f"edit_{task}")
-            remove_button = st.button(f"Remove", key=f"remove_{task}")
+# Function to sort tasks by priority
+def sort_tasks():
+    priority_order = {"🚨 High": 1, "⚖️ Medium": 2, "🟢 Low": 3}
+    st.session_state.tasks.sort(key=lambda x: priority_order[x["priority"]])
+
+# App Title with emoji
+st.markdown("""
+    <h1 style='text-align: center; color: #FF6347;'>📝 Growth Mindset To-Do List ✅</h1>
+""", unsafe_allow_html=True)
+
+# Sidebar for Task Input with styling
+st.sidebar.markdown("""
+    <h2 style='color: #4CAF50;'>📋 Manage Your Tasks</h2>
+""", unsafe_allow_html=True)
+
+task_input = st.sidebar.text_input("✍️ Enter your task here...", key="task_input")
+priority_select = st.sidebar.selectbox("⚡ Priority", ["🚨 High", "⚖️ Medium", "🟢 Low"], key="priority_select")
+
+def reset_task_input():
+    st.session_state.task_input = ""
+
+if task_input:
+    add_task(task_input, priority_select)
+    st.button("✅ Confirm", on_click=reset_task_input)  # Ensures session state is updated safely
+
+# Display Tasks with improved styling
+if st.session_state.tasks:
+    st.markdown("""
+        <h2 style='color: #FFD700;'>📝 Your To-Do List</h2>
+    """, unsafe_allow_html=True)
+    
+    sort_tasks()
+    for index, task in enumerate(st.session_state.tasks):
+        with st.container():
+            cols = st.columns([3, 2, 1, 1, 1])
             
-            # If Remove button is clicked, remove the task
-            if remove_button:
-                remove_task(task)
+            # Task with priority tag
+            with cols[0]:
+                st.markdown(f"<h4>{task['task']} ({task['priority']})</h4>", unsafe_allow_html=True)
+                st.caption(f"🕒 Added: {task['timestamp']}")
+            
+            # Mark as completed
+            with cols[1]:
+                if st.checkbox("✔️ Done", task['completed'], key=f"check_{index}"):
+                    toggle_task(task['task'])
+                    st.rerun()
 
-            # If Edit button is clicked, show an input box to edit the task
-            if edit_button:
-                new_task = st.text_input(f"Edit task '{task}':", key=f"edit_input_{task}")
-                if st.button("Save Changes", key=f"save_{task}"):
-                    if new_task:
-                        edit_task(task, new_task)
-                    else:
-                        st.warning("Task cannot be empty!")
+            # Edit task button
+            with cols[2]:
+                new_task_name = st.text_input(f"✏️ Edit {task['task']}", value=task['task'], key=f"edit_{index}")
+                if st.button("💾 Save", key=f"edit_btn_{index}"):
+                    edit_task(task['task'], new_task_name)
+                    st.rerun()
 
+            # Remove task button
+            with cols[3]:
+                if st.button("🗑️ Remove", key=f"remove_{index}"):
+                    remove_task(task['task'])
+                    st.rerun()
 else:
-    st.markdown("### No tasks added. Start by adding a task!")
+    st.info("🎉 No tasks added yet. Start by adding a task from the sidebar!")
+
+# Clear all tasks button
+if st.button("🗑️ Clear All Tasks"):
+    st.session_state.tasks = []
+    st.rerun()
+
